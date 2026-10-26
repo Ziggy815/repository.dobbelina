@@ -673,7 +673,7 @@ def playvid(videourl, name, download=None, subtitle=None, IA_check='check'):
         downloadVideo(videourl, name)
     else:
         try:
-            watched.begin_playback()
+            watched.begin_playback_async()
         except Exception as e:
             kodilog('watched: begin_playback failed: {0}'.format(e))
         iconimage = xbmc.getInfoImage("ListItem.Thumb")
@@ -752,7 +752,7 @@ def inputstream_check(url, listitem, IA_check):
 @url_dispatcher.register()
 def PlayStream(name, url):
     try:
-        watched.begin_playback()
+        watched.begin_playback_async()
     except Exception as e:
         kodilog('watched: begin_playback failed: {0}'.format(e))
     item = xbmcgui.ListItem(name, path=url)

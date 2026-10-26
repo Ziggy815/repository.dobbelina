@@ -54,6 +54,10 @@ if not os.path.exists(tempDir):
 
 KODIVER = float(xbmcaddon.Addon('xbmc.addon').getAddonInfo('version')[:4])
 
+# Set when a listing contains playable video items. Such listings must not be
+# cached by Kodi, otherwise a container refresh shows stale watched flags.
+_VIDEO_ITEMS_ADDED = False
+
 
 def cum_image(filename, custom=False):
     if filename.startswith('http'):
@@ -64,6 +68,13 @@ def cum_image(filename, custom=False):
 
 
 def eod(handle=addon_handle, cache=True):
+    global _VIDEO_ITEMS_ADDED
+    # Listings with playable items can change their watched state at any time.
+    # Kodi's disc cache would otherwise keep showing the old flag after a
+    # playback or a manual toggle.
+    if _VIDEO_ITEMS_ADDED:
+        cache = False
+    _VIDEO_ITEMS_ADDED = False
     viewtype = None
     if addon.getSetting('customview') == 'true':
         skin = xbmc.getSkinDir().lower()
@@ -93,6 +104,7 @@ def addImgLink(name, url, mode):
 
 
 def addDownLink(name, url, mode, iconimage, desc='', stream=None, fav='add', noDownload=False, contextm=None, fanart=None, duration='', quality=''):
+    global _VIDEO_ITEMS_ADDED
     contextMenuItems = []
     favtext = "Remove from" if fav == 'del' else "Add to"  # fav == 'add' or 'del'
     dname = desc == name
@@ -271,6 +283,7 @@ def addDownLink(name, url, mode, iconimage, desc='', stream=None, fav='add', noD
         ('[COLOR hotpink]Set this view as default[/COLOR]', 'RunPlugin(' + setview + ')'))
     liz.addContextMenuItems(contextMenuItems, replaceItems=False)
     ok = xbmcplugin.addDirectoryItem(handle=addon_handle, url=u, listitem=liz, isFolder=False)
+    _VIDEO_ITEMS_ADDED = True
     return ok
 
 

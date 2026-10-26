@@ -21,6 +21,7 @@
 
 import os
 import sqlite3
+import threading
 import time
 
 from kodi_six import xbmc, xbmcaddon, xbmcvfs
@@ -39,6 +40,8 @@ STOP_GRACE_POLLS = 3
 _CONTEXT = {'url': None, 'name': None, 'mode': None}
 _WATCHED_CACHE = None
 _INITIALIZED_PATH = None
+_DB_PATH = None
+_ADDON = None
 
 
 # ---------------------------------------------------------------------------
@@ -53,7 +56,10 @@ def _log(message, level=xbmc.LOGDEBUG):
 
 
 def _addon():
-    return xbmcaddon.Addon(ADDON_ID)
+    global _ADDON
+    if _ADDON is None:
+        _ADDON = xbmcaddon.Addon(ADDON_ID)
+    return _ADDON
 
 
 def _translate_path(path):
@@ -68,13 +74,17 @@ def _profile_dir():
 
 
 def _db_path():
+    global _DB_PATH
+    if _DB_PATH is not None:
+        return _DB_PATH
     path = _profile_dir()
     if path and not os.path.isdir(path):
         try:
             os.makedirs(path)
         except OSError:
             pass
-    return os.path.join(path, 'watched.db')
+    _DB_PATH = os.path.join(path, 'watched.db')
+    return _DB_PATH
 
 
 def _setting(key, default=''):
@@ -84,11 +94,15 @@ def _setting(key, default=''):
         return default
 
 
-def _connect():
-    conn = sqlite3.connect(_db_path(), timeout=15)
+def _connect(timeout=15):
+    conn = sqlite3.connect(_db_path(), timeout=timeout)
     conn.row_factory = sqlite3.Row
     try:
-        conn.execute('PRAGMA busy_timeout=15000')
+        conn.execute('PRAGMA busy_timeout={0}'.format(int(timeout * 1000)))
+        # synchronous is a per-connection setting. NORMAL keeps WAL commits
+        # fast without risking corruption (only the last transaction can be
+        # lost on a power failure).
+        conn.execute('PRAGMA synchronous=NORMAL')
     except sqlite3.Error:
         pass
     return conn
@@ -114,29 +128,37 @@ def init():
     conn = None
     try:
         conn = _connect()
-        try:
-            conn.execute('PRAGMA journal_mode=WAL')
-        except sqlite3.Error:
-            # WAL is not available on every filesystem (e.g. some network
-            # shares). The default journal still works, just with less
-            # concurrency.
-            pass
-        with conn:
-            conn.execute(
-                'CREATE TABLE IF NOT EXISTS watched ('
-                'url TEXT PRIMARY KEY, '
-                'title TEXT, '
-                'mode TEXT, '
-                'added INTEGER NOT NULL)'
-            )
-            conn.execute(
-                'CREATE TABLE IF NOT EXISTS pending ('
-                'id INTEGER PRIMARY KEY CHECK (id = 1), '
-                'url TEXT NOT NULL, '
-                'title TEXT, '
-                'mode TEXT, '
-                'created INTEGER NOT NULL)'
-            )
+        # Fast path: the schema already exists, so no write lock and no
+        # journal-mode switch is needed. This keeps playback startup quick
+        # even while the service is polling the same database.
+        existing = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='watched'"
+        ).fetchone()
+        if existing is None:
+            try:
+                conn.execute('PRAGMA journal_mode=WAL')
+                conn.execute('PRAGMA synchronous=NORMAL')
+            except sqlite3.Error:
+                # WAL is not available on every filesystem (e.g. some network
+                # shares). The default journal still works, just with less
+                # concurrency.
+                pass
+            with conn:
+                conn.execute(
+                    'CREATE TABLE IF NOT EXISTS watched ('
+                    'url TEXT PRIMARY KEY, '
+                    'title TEXT, '
+                    'mode TEXT, '
+                    'added INTEGER NOT NULL)'
+                )
+                conn.execute(
+                    'CREATE TABLE IF NOT EXISTS pending ('
+                    'id INTEGER PRIMARY KEY CHECK (id = 1), '
+                    'url TEXT NOT NULL, '
+                    'title TEXT, '
+                    'mode TEXT, '
+                    'created INTEGER NOT NULL)'
+                )
         _INITIALIZED_PATH = path
         return True
     except Exception as exc:
@@ -277,18 +299,18 @@ def begin_playback(url=None, title=None, mode=None):
     Called from utils.playvid() after the stream has been resolved. The
     service picks this up when Kodi reports that playback started.
     """
-    if not auto_mark_enabled() or not init():
-        return False
-
     url = url or _CONTEXT.get('url')
     title = title or _CONTEXT.get('name')
     mode = mode or _CONTEXT.get('mode')
     if not url:
         return False
 
+    if not auto_mark_enabled() or not init():
+        return False
+
     conn = None
     try:
-        conn = _connect()
+        conn = _connect(timeout=5)
         with conn:
             conn.execute(
                 'INSERT OR REPLACE INTO pending (id, url, title, mode, created) '
@@ -303,6 +325,29 @@ def begin_playback(url=None, title=None, mode=None):
     finally:
         if conn is not None:
             conn.close()
+
+
+def begin_playback_async(url=None, title=None, mode=None):
+    """
+    Non-blocking variant used on the playback path.
+
+    The write itself only takes a few milliseconds, but it must not delay
+    setResolvedUrl() on slow storage. The plugin process waits for the
+    non-daemon thread at shutdown, so the pending row is still written.
+    """
+    def worker():
+        try:
+            begin_playback(url=url, title=title, mode=mode)
+        except Exception as exc:
+            _log('async begin_playback failed: {0}'.format(exc), xbmc.LOGERROR)
+
+    try:
+        thread = threading.Thread(target=worker, name='cumination-watched')
+        thread.daemon = False
+        thread.start()
+        return True
+    except Exception:
+        return begin_playback(url=url, title=title, mode=mode)
 
 
 def get_pending():
@@ -370,6 +415,13 @@ def finalize_session(session, ended=False):
             ),
             xbmc.LOGINFO
         )
+        # The list the user returns to was created before playback started,
+        # so refresh it to show the watched flag immediately.
+        try:
+            xbmc.sleep(1000)
+            xbmc.executebuiltin('Container.Refresh')
+        except Exception:
+            pass
         return True
     _log(
         'not marked, stopped at {0:.1f}% (threshold {1}%): {2}'.format(
