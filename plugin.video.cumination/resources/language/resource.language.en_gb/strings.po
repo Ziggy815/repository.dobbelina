@@ -687,3 +687,43 @@ msgstr ""
 msgctxt "#33027"
 msgid "Page Item Limit (0=no pagination)"
 msgstr ""
+
+msgctxt "#33028"
+msgid "Automatically mark videos as watched"
+msgstr ""
+
+msgctxt "#33029"
+msgid "Mark as watched after (% of video)"
+msgstr ""
+
+msgctxt "#33030"
+msgid "Mark as watched"
+msgstr ""
+
+msgctxt "#33031"
+msgid "Mark as unwatched"
+msgstr ""
+
+msgctxt "#33032"
+msgid "Marked as watched"
+msgstr ""
+
+msgctxt "#33033"
+msgid "Marked as unwatched"
+msgstr ""
+
+msgctxt "#33034"
+msgid "Watched"
+msgstr ""
+
+msgctxt "#33035"
+msgid "Clear watched history"
+msgstr ""
+
+msgctxt "#33036"
+msgid "Watched history cleared"
+msgstr ""
+
+msgctxt "#33037"
+msgid "Remove all watched marks?"
+msgstr ""

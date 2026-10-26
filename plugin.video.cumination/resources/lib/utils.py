@@ -34,7 +34,7 @@ from threading import Thread
 import six
 import StorageServer
 from kodi_six import xbmc, xbmcgui, xbmcplugin, xbmcvfs, xbmcaddon
-from resources.lib import cloudflare, random_ua, strings, jsunpack
+from resources.lib import cloudflare, random_ua, strings, jsunpack, watched
 from resources.lib.basics import (
     addDir, addon, addon_handle, addon_sys,
     cookiePath, cum_image, cuminationicon, eod,
@@ -672,6 +672,10 @@ def playvid(videourl, name, download=None, subtitle=None, IA_check='check'):
     if download == 1:
         downloadVideo(videourl, name)
     else:
+        try:
+            watched.begin_playback()
+        except Exception as e:
+            kodilog('watched: begin_playback failed: {0}'.format(e))
         iconimage = xbmc.getInfoImage("ListItem.Thumb")
         subject = xbmc.getInfoLabel("ListItem.Plot")
         listitem = xbmcgui.ListItem(name)
@@ -747,6 +751,10 @@ def inputstream_check(url, listitem, IA_check):
 
 @url_dispatcher.register()
 def PlayStream(name, url):
+    try:
+        watched.begin_playback()
+    except Exception as e:
+        kodilog('watched: begin_playback failed: {0}'.format(e))
     item = xbmcgui.ListItem(name, path=url)
     xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, item)
     return

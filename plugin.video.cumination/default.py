@@ -30,6 +30,7 @@ from resources.lib import utils
 from resources.lib import favorites
 from resources.lib import pin
 from resources.lib.adultsite import AdultSite
+from resources.lib import watched_ui  # noqa: F401
 from resources.lib.sites import *  # noqa
 
 socket.setdefaulttimeout(60)

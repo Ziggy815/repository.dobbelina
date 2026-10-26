@@ -12,6 +12,11 @@
         <setting id="setpin" type="action" label="30028" enable="true" option="close" action="RunPlugin(plugin://plugin.video.cumination/?mode=pin.SetPin)" />
         <setting id="content" type="enum" label="30500" lvalues="30501|30502" default="0" />
     </category>
+    <category label="33034">
+        <setting id="mark_watched" type="bool" label="33028" default="true" />
+        <setting id="mark_watched_pct" type="slider" label="33029" range="10,10,100" default="90" option="int" enable="eq(-1,true)" />
+        <setting id="clear_watched" type="action" label="33035" option="close" action="RunPlugin(plugin://plugin.video.cumination/?mode=watched.clear)" />
+    </category>
     <category label="30065">
         <setting type="lsep" label="30029" />
         <setting id="clear_cache" label="33011" type="action" action="RunPlugin(plugin://plugin.video.cumination/?mode=utils.clear_cache)"/>

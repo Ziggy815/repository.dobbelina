@@ -1,3 +1,10 @@
+[B]Unreleased - Watched feature[/B]
+- new watched tracking with its own database (watched.db)
+- mark/unmark videos from the context menu
+- optional automatic marking after a configurable percentage
+- background service for reliable automatic marking
+- setting to clear the watched history
+
 [B]Version 1.1.206[/B]
 - allclassic - fix playback
 - AllPornStream fixed Search

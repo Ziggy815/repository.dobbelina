@@ -20,6 +20,7 @@ try:
     from inspect import getargspec
 except ImportError:
     from inspect import getfullargspec as getargspec
+from resources.lib import watched
 from resources.lib.basics import addDir, addDownLink, addImgLink, searchDir, cum_image, addon
 
 filter_listing = addon.getSetting('filter_listing') or None
@@ -113,6 +114,14 @@ class URL_Dispatcher(object):
         if mode not in cls.func_registry:
             message = 'Error: Attempt to invoke unregistered mode {}'.format(mode)
             raise Exception(message)
+
+        # Remember which page the plugin is currently handling. playvid() uses
+        # this to record the page URL of the video that is about to start.
+        watched.set_context(
+            url=queries.get('url'),
+            name=queries.get('name'),
+            mode=mode
+        )
 
         args = []
         kwargs = {}

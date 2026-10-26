@@ -7,6 +7,9 @@ from kodi_six import xbmc, xbmcaddon, xbmcplugin, xbmcgui, xbmcvfs
 import os
 import sys
 
+from resources.lib import strings
+from resources.lib import watched
+
 __scriptname__ = "Cumination"
 __author__ = "Cumination"
 __scriptid__ = "plugin.video.cumination"
@@ -178,6 +181,17 @@ def addDownLink(name, url, mode, iconimage, desc='', stream=None, fav='add', noD
 
     liz.setArt({'thumb': iconimage, 'icon': "DefaultVideo.png", 'poster': iconimage, 'fanart': fanart})
 
+    watched_state = watched.is_watched(url)
+    if watched_state:
+        liz.setProperty('Cumination.Watched', 'true')
+        try:
+            if KODIVER > 19.8:
+                liz.getVideoInfoTag().setPlaycount(1)
+            else:
+                liz.setInfo(type="Video", infoLabels={"playcount": 1})
+        except Exception as e:
+            xbmc.log("@@@@Cumination: could not set watched state: " + str(e), xbmc.LOGDEBUG)
+
     if stream:
         liz.setProperty('IsPlayable', 'true')
 
@@ -234,6 +248,13 @@ def addDownLink(name, url, mode, iconimage, desc='', stream=None, fav='add', noD
     contextMenuItems.append(('[COLOR hotpink]' + favtext + ' favorites[/COLOR]', 'RunPlugin(' + favorite + ')'))
     if not noDownload:
         contextMenuItems.append(('[COLOR hotpink]Download Video[/COLOR]', 'RunPlugin(' + dwnld + ')'))
+
+    watched_mode = (sys.argv[0]
+                    + "?url=" + urllib_parse.quote_plus(url)
+                    + "&mode=" + str('watched.toggle')
+                    + "&name=" + urllib_parse.quote_plus(name))
+    watched_text = addon.getLocalizedString(strings.STRINGS['mark_as_unwatched' if watched_state else 'mark_as_watched'])
+    contextMenuItems.append(('[COLOR hotpink]' + watched_text + '[/COLOR]', 'RunPlugin(' + watched_mode + ')'))
 
     add_keyword_url = (sys.argv[0]
                        + "?mode=" + str('utils.addKeywordFromContext')

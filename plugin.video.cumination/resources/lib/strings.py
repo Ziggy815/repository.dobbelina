@@ -96,5 +96,15 @@ STRINGS = {
     'clear_cache': 33011,
     'cache_cleared': 33012,
     'cookies_cleared': 33013,
-    'keyword_exists': 33014
+    'keyword_exists': 33014,
+    'mark_watched': 33028,
+    'mark_watched_pct': 33029,
+    'mark_as_watched': 33030,
+    'mark_as_unwatched': 33031,
+    'marked_watched': 33032,
+    'marked_unwatched': 33033,
+    'watched': 33034,
+    'clear_watched': 33035,
+    'watched_cleared': 33036,
+    'clear_watched_confirm': 33037
 }
