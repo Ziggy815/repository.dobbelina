@@ -54,6 +54,8 @@ PY3 = six.PY3
 TRANSLATEPATH = xbmcvfs.translatePath if PY3 else xbmc.translatePath
 LOGINFO = xbmc.LOGINFO if PY3 else xbmc.LOGNOTICE
 KODIVER = float(xbmcaddon.Addon('xbmc.addon').getAddonInfo('version')[:4])
+TEXTURESDB = os.path.join(TRANSLATEPATH('special://database'), 'Textures14.db') if KODIVER > 21.3 else os.path.join(TRANSLATEPATH('special://database'), 'Textures13.db')
+
 
 base_hdrs = {
     'User-Agent': USER_AGENT,
@@ -1862,11 +1864,17 @@ class VideoPlayer():
         if not sources:
             notify(i18n('oh_oh'), i18n('not_found'))
             return
-        self._select_source(sources)
+        if addon.getSetting("dontask") == "true":
+            for src in sources:
+                if self.play_from_link_to_resolve(src):
+                    return
+            notify(i18n('rslv_fail'), '{0}'.format(i18n('not_rslv')))
+        else:
+            self._select_source(sources)
 
     @_cancellable
     def _select_source(self, sources):
-        if not len(sources) > 1 or addon.getSetting("dontask") == "true":
+        if len(sources) == 1:
             source = sources[0]
         else:
             source = self.resolveurl.choose_source(sources)
@@ -1884,10 +1892,13 @@ class VideoPlayer():
         except self.resolveurl.resolver.ResolverError:
             link = False  # ResolveURL returns False in some cases when resolving fails
         if not link:
-            notify(i18n('rslv_fail'), '{0} {1}'.format(source.title, i18n('not_rslv')))
+            if addon.getSetting("dontask") == "false":
+                notify(i18n('rslv_fail'), '{0} {1}'.format(source.title, i18n('not_rslv')))
+            return False
         else:
             self.progress.close()
             playvid(link, self.name, self.download, IA_check=self.IA_check)
+            return True
 
     @_cancellable
     def play_from_direct_link(self, direct_link):
@@ -2247,7 +2258,7 @@ class Thumbnails:
             kodilog("Failed to download image {}: {}".format(img, e))
 
     def fix_img(self, img):
-        if KODIVER < 21:
+        if KODIVER < 21 or KODIVER > 21.3:
             return img
         thumbnail = urllib_parse.quote(urllib_parse.urlparse(img).path, safe='')
         img_path = os.path.join(self.path, thumbnail).replace('.jpg', '.webp')
