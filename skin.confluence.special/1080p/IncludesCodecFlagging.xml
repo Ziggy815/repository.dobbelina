@@ -59,7 +59,7 @@
 			<width>120</width>
 			<height>53</height>
 			<aspectratio align="right">keep</aspectratio>
-			<texture>$INFO[ListItem.AudioCodec,flagging/audio/,.png]</texture>
+			<texture>$VAR[ListItemAudioCodecTexture,flagging/audio/,.png]</texture>
 		</control>
 	</include>
 	<include name="AudioChannelsFlaggingConditions">
@@ -80,34 +80,4 @@
 			<texture>$INFO[ListItem.VideoAspect,flagging/aspectratio/,.png]</texture>
 		</control>
 	</include>
-	
-<variable name="VideoPlayerAudioCodecTexture">
-
-    <!-- AAC -->
-    <value condition="String.IsEqual(VideoPlayer.AudioCodec,aac_lc)">flagging/audio/aac.png</value>
-    <value condition="String.IsEqual(VideoPlayer.AudioCodec,he_aac)">flagging/audio/aac.png</value>
-    <value condition="String.IsEqual(VideoPlayer.AudioCodec,he_aac_v2)">flagging/audio/aac.png</value>
-    <value condition="String.IsEqual(VideoPlayer.AudioCodec,aac_ssr)">flagging/audio/aac.png</value>
-    <value condition="String.IsEqual(VideoPlayer.AudioCodec,aac_ltp)">flagging/audio/aac.png</value>
-
-    <!-- DTS -->
-    <value condition="String.IsEqual(VideoPlayer.AudioCodec,dts_96_24)">flagging/audio/dts.png</value>
-    <value condition="String.IsEqual(VideoPlayer.AudioCodec,dts_es)">flagging/audio/dts.png</value>
-    <value condition="String.IsEqual(VideoPlayer.AudioCodec,dts_express)">flagging/audio/dts.png</value>
-    <value condition="String.IsEqual(VideoPlayer.AudioCodec,dtshd_ma_x)">flagging/audio/dtshd_ma.png</value>
-    <value condition="String.IsEqual(VideoPlayer.AudioCodec,dtshd_ma_x_imax)">flagging/audio/dtshd_ma.png</value>
-
-    <!-- Dolby -->
-    <value condition="String.IsEqual(VideoPlayer.AudioCodec,eac3_ddp_atmos)">flagging/audio/eac3.png</value>
-    <value condition="String.IsEqual(VideoPlayer.AudioCodec,truehd_atmos)">flagging/audio/truehd.png</value>
-
-    <!-- PCM -->
-    <value condition="String.IsEqual(VideoPlayer.AudioCodec,pcm_s16be)">flagging/audio/pcm.png</value>
-    <value condition="String.IsEqual(VideoPlayer.AudioCodec,pcm_u8)">flagging/audio/pcm.png</value>
-
-    <!-- All original codec filenames -->
-    <value>$INFO[VideoPlayer.AudioCodec,flagging/audio/,.png]</value>
-
-</variable>
-
 </includes>

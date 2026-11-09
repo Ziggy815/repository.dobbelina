@@ -267,6 +267,14 @@
 						<visible>!Player.ChannelPreviewActive + !String.IsEmpty(VideoPlayer.VideoResolution)</visible>
 					</control>
 					<control type="image" id="1">
+						<description>Video Codec Image</description>
+						<width>110</width>
+						<height>53</height>
+						<aspectratio align="center">keep</aspectratio>
+						<texture>$VAR[VideoPlayerVideoCodecTexture]</texture>
+						<visible>!Player.ChannelPreviewActive + !String.IsEmpty(VideoPlayer.VideoCodec)</visible>
+					</control>
+					<control type="image" id="1">
 						<description>Codec Image</description>
 						<width>110</width>
 						<height>53</height>
@@ -293,7 +301,7 @@
 					<control type="group" id="1">
 						<width>110</width>
 						<height>53</height>
-						<visible>!Player.ChannelPreviewActive + !String.IsEmpty(VideoPlayer.AudioLanguage)</visible>
+						<visible>!Player.ChannelPreviewActive</visible>
 						<control type="image" id="1">
 							<top>0</top>
 							<description>Audio Language Image</description>
@@ -308,7 +316,7 @@
 							<height>53</height>
 							<font>font13</font>
 							<align>left</align>
-							<label>$INFO[VideoPlayer.AudioLanguage]</label>
+							<label>$VAR[ActiveVideoPlayerAudioLanguage]</label>
 							<textcolor>grey</textcolor>
 						</control>
 					</control>
